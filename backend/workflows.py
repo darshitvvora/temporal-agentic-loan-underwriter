@@ -104,6 +104,9 @@ class SupervisorWorkflow:
             "aggregate_and_decide",
             {"application": application, "income": income_res, "expense": expense_res, "credit": credit_res, "docs": docs},
             start_to_close_timeout=timedelta(seconds=1200),
+            retry_policy=RetryPolicy(
+                maximum_interval=timedelta(seconds=10)
+            )
         )
 
         # 4. Prepare summary for human review and expose via query

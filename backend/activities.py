@@ -1,8 +1,8 @@
 from temporalio import activity
 from temporalio.exceptions import ApplicationError
 from typing import Dict, Any
+import model
 import random
-import os
 from strands import Agent
 from strands.models.ollama import OllamaModel
 
@@ -12,8 +12,6 @@ async def fetch_bank_account(applicant_id: str) -> Dict[str, Any]:
     # Simulate open banking API call failure for first 2 attempts
     activity_info = activity.info()
     current_attempt = activity_info.attempt
-
-    activity.heartbeat()
 
     # Simulate API failure for the first 2 attempts
     if current_attempt <= 2:
@@ -39,8 +37,6 @@ async def fetch_credit_report_cibil(applicant_id: str) -> Dict[str, Any]:
     Fetch credit report from CIBIL bureau.
     Simulates API failure to demonstrate Temporal's error handling.
     """
-    activity.heartbeat()
-
     # Simulate CIBIL API failure
     raise ApplicationError(
         "CIBIL API temporarily unavailable",
@@ -55,7 +51,6 @@ async def fetch_credit_report_experian(applicant_id: str) -> Dict[str, Any]:
     Fetch credit report from Experian bureau.
     This acts as a fallback when CIBIL fails.
     """
-    activity.heartbeat()
 
     # Simulate successful Experian response
     return {
@@ -99,13 +94,8 @@ async def credit_assessment(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 @activity.defn
 async def aggregate_and_decide(payload: Dict[str, Any]) -> Dict[str, Any]:
-    # Initialize Ollama model with Strands
     try:
-        ollama_model = OllamaModel(
-            host=os.getenv("OLLAMA_URL", "http://localhost:11434"),
-            model_id=os.getenv("OLLAMA_MODEL", "llama3:latest")
-        )
-        agent = Agent(model=ollama_model)
+        agent = Agent(model=model.get_model())
 
         prompt_data = {
             "application": payload.get("application"),
